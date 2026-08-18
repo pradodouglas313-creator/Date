@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Painel — MeuDate</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Painel — Meus Convites</h1>
+
+    <div class="authRow">
+      <button id="loginBtn">Entrar com Google</button>
+      <button id="logoutBtn" class="hidden">Sair</button>
+      <span id="authUser" style="margin-left:12px;color:var(--muted)"></span>
+    </div>
+
+    <section id="panelSection" class="hidden">
+      <h2>Seus convites</h2>
+      <div id="invitesList">Carregando…</div>
+    </section>
+
+    <div class="note">Se você não estiver autenticado, é possível usar a <strong>chave do painel</strong> que aparece ao criar o convite (protótipo).</div>
+
+    <p style="margin-top:18px"><a href="/">Voltar ao site</a></p>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "SEU_API_KEY",
+      authDomain: "SEU_AUTH_DOMAIN",
+      projectId: "SEU_PROJECT_ID",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const authUser = document.getElementById('authUser');
+    const panelSection = document.getElementById('panelSection');
+    const invitesList = document.getElementById('invitesList');
+
+    loginBtn.addEventListener('click', ()=> signInWithPopup(auth, provider));
+    logoutBtn.addEventListener('click', ()=> signOut(auth));
+
+    function renderInvites(invites){
+      invitesList.innerHTML = '';
+      if(invites.length === 0) {
+        invitesList.innerHTML = '<div>Nenhum convite encontrado.</div>';
+        return;
+      }
+      invites.forEach(inv => {
+        const el = document.createElement('div');
+        el.className = 'inviteCard';
+        el.innerHTML = `
+          <strong>${inv.title || 'Sem título'}</strong>
+          <div>Autor: ${inv.creatorName || ''} ${inv.creatorEmail ? '(' + inv.creatorEmail + ')' : ''}</div>
+          <div>Código: <code>${inv.code}</code></div>
+          <div class="row" style="margin-top:8px">
+            <a class="button" href="/d/${inv.code}">Ver convite</a>
+            <button class="button" data-code="${inv.code}" onclick="openResponses('${inv.code}')">Ver respostas</button>
+          </div>
+          <div id="responses-${inv.code}" class="responsesArea"></div>
+        `;
+        invitesList.appendChild(el);
+      });
+    }
+
+    async function openResponses(code){
+      const area = document.getElementById('responses-' + code);
+      area.innerHTML = 'Carregando respostas…';
+      const respCol = collection(db, 'invites', code, 'responses');
+      onSnapshot(respCol, snap => {
+        area.innerHTML = '';
+        snap.forEach(d => {
+          const data = d.data();
+          const div = document.createElement('div');
+          div.className = 'responseItem';
+          const dStr = data.date ? new Date(data.date).toLocaleDateString() : '';
+          div.innerHTML = `<strong>${data.name || 'Convidado'}</strong> — ${dStr} ${data.time || ''}<div class='muted'>${data.message||''}</div>`;
+          area.appendChild(div);
+        });
+        if(snap.empty) area.innerHTML = '<div class="muted">Nenhuma resposta ainda.</div>';
+      });
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if(user){
+        authUser.textContent = user.displayName || user.email;
+        loginBtn.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+        panelSection.classList.remove('hidden');
+
+        // Listen to invites created by this user (creatorUid)
+        const q = query(collection(db, 'invites'), where('creatorUid','==', user.uid));
+        onSnapshot(q, snap => {
+          const invites = [];
+          snap.forEach(docSnap => {
+            const d = docSnap.data();
+            invites.push({...d, code: docSnap.id});
+          });
+          renderInvites(invites);
+        });
+      } else {
+        authUser.textContent = '';
+        loginBtn.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+        panelSection.classList.remove('hidden');
+
+        // For unauthenticated users we don't show invites by uid. They can use the creatorKey in the main page.
+        invitesList.innerHTML = '<div class="muted">Faça login para ver seus convites protegidos, ou use a chave do painel que aparece ao criar um convite.</div>';
+      }
+    });
+
+    // expose openResponses so inline onclick can call it
+    window.openResponses = openResponses;
+  </script>
+</body>
+</html>
