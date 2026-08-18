@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MeuDate — Convites</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>MeuDate</h1>
+
+    <!-- Criar convite -->
+    <section id="create-section">
+      <h2>Criar um convite</h2>
+      <label>Seu nome
+        <input id="creatorName" placeholder="Ex: Douglas">
+      </label>
+      <label>Título (opcional)
+        <input id="eventTitle" placeholder="Ex: Date sábado?">
+      </label>
+      <button id="createBtn">Criar convite</button>
+
+      <div id="createdPanel" class="hidden">
+        <p>Link criado:</p>
+        <input id="inviteLink" readonly>
+        <div class="row">
+          <button id="copyLink">Copiar link</button>
+          <button id="shareWA">Compartilhar (WhatsApp)</button>
+        </div>
+        <p>Link do painel (guarde este código para ver respostas):</p>
+        <input id="dashboardKey" readonly>
+        <div class="note">Guarde a chave do painel — ela permite ver/gerenciar este convite no protótipo.</div>
+
+        <h3>Respostas</h3>
+        <ul id="responsesList"></ul>
+      </div>
+    </section>
+
+    <!-- Receber convite / aceitar -->
+    <section id="accept-section" class="hidden">
+      <h2>Convite</h2>
+      <div id="inviteHeader"></div>
+
+      <label>Escolha a data
+        <input id="datePicker" placeholder="Escolha uma data">
+      </label>
+
+      <div id="timeOptions">
+        <p>Que horas seria melhor?</p>
+        <div id="timesContainer"></div>
+        <label>Ou escreva uma mensagem
+          <input id="customMessage" placeholder="Estou livre sábado à noite :)">
+        </label>
+      </div>
+
+      <button id="acceptBtn">Confirmar</button>
+
+      <div id="acceptedPanel" class="hidden">
+        <h3>Date aceito! ❤️</h3>
+        <p>Obrigado — sua resposta foi enviada.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+</body>
+</html>
