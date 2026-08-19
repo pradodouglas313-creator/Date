@@ -10,67 +10,52 @@
   <main class="container">
     <h1>Painel — Meus Convites</h1>
 
-    <div class="authRow">
-      <button id="loginBtn">Entrar com Google</button>
-      <button id="logoutBtn" class="hidden">Sair</button>
-      <span id="authUser" style="margin-left:12px;color:var(--muted)"></span>
+    <p class="note">Este painel lê convites do seu navegador (localStorage). Para ver convites criados em outro dispositivo, importe o JSON do convite aqui (Exportar/Importar).</p>
+
+    <div class="row" style="margin-bottom:12px">
+      <button id="importBtn">Importar convite (.json)</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+      <button id="clearAllBtn">Limpar todos os convites</button>
     </div>
 
-    <section id="panelSection" class="hidden">
-      <h2>Seus convites</h2>
-      <div id="invitesList">Carregando…</div>
-    </section>
+    <div id="invitesList">Carregando…</div>
 
-    <div class="note">Se você não estiver autenticado, é possível usar a <strong>chave do painel</strong> que aparece ao criar o convite (protótipo).</div>
-
-    <p style="margin-top:18px"><a href="/">Voltar ao site</a></p>
+    <p style="margin-top:18px"><a href="index.html">Voltar ao site</a></p>
   </main>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBiL_Ev5z6lN66x577tHkIHrAs7sjToL38",
-      authDomain: "meudate-1d36d.firebaseapp.com",
-      projectId: "meudate-1d36d",
-      storageBucket: "meudate-1d36d.firebasestorage.app",
-      messagingSenderId: "1001389537404",
-      appId: "1:1001389537404:web:c073e379324992772cb1f9",
-      measurementId: "G-SBVY740DT6"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const authUser = document.getElementById('authUser');
-    const panelSection = document.getElementById('panelSection');
+  <script>
+  (function(){
+    const LS_KEY = 'meudate_invites_v1';
+    function loadLocalInvites(){ try{ return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }catch(e){ return {}; } }
+    function saveLocalInvites(obj){ localStorage.setItem(LS_KEY, JSON.stringify(obj)); }
     const invitesList = document.getElementById('invitesList');
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+    const clearAllBtn = document.getElementById('clearAllBtn');
 
-    loginBtn.addEventListener('click', ()=> signInWithPopup(auth, provider));
-    logoutBtn.addEventListener('click', ()=> signOut(auth));
-
-    function renderInvites(invites){
+    function render(){
       invitesList.innerHTML = '';
-      if(invites.length === 0) {
-        invitesList.innerHTML = '<div>Nenhum convite encontrado.</div>';
-        return;
-      }
-      invites.forEach(inv => {
+      const all = loadLocalInvites();
+      const keys = Object.keys(all);
+      if(keys.length===0){ invitesList.innerHTML = '<div class="muted">Nenhum convite salvo localmente.</div>'; return; }
+      keys.reverse().forEach(code=>{
+        const inv = all[code];
         const el = document.createElement('div');
         el.className = 'inviteCard';
         el.innerHTML = `
-          <strong>${inv.title || 'Sem título'}</strong>
-          <div>Autor: ${inv.creatorName || ''} ${inv.creatorEmail ? '(' + inv.creatorEmail + ')' : ''}</div>
-          <div>Código: <code>${inv.code}</code></div>
-          <div class="row" style="margin-top:8px">
-            <a class="button" href="/d/${inv.code}">Ver convite</a>
-            <button class="button" data-code="${inv.code}" onclick="openResponses('${inv.code}')">Ver respostas</button>
+          <div style="display:flex;align-items:center;gap:12px">
+            ${inv.image ? `<img src="${inv.image}" style="width:84px;height:56px;object-fit:cover;border-radius:6px">` : ''}
+            <div style="flex:1">
+              <strong>${inv.title || 'Sem título'}</strong>
+              <div class="muted">Autor: ${inv.creatorName || ''}</div>
+              <div style="margin-top:6px">Código: <code class="code">${inv.code}</code></div>
+              <div style="margin-top:8px" class="row">
+                <a class="button" href="/d/${inv.code}">Ver convite</a>
+                <button class="button" data-code="${inv.code}" onclick="openResponses('${inv.code}')">Ver respostas</button>
+                <button class="button" data-code="${inv.code}" onclick="exportInvite('${inv.code}')">Exportar</button>
+                <button class="button" data-code="${inv.code}" onclick="deleteInvite('${inv.code}')">Apagar</button>
+              </div>
+            </div>
           </div>
           <div id="responses-${inv.code}" class="responsesArea"></div>
         `;
@@ -78,54 +63,55 @@
       });
     }
 
-    async function openResponses(code){
+    window.openResponses = function(code){
       const area = document.getElementById('responses-' + code);
       area.innerHTML = 'Carregando respostas…';
-      const respCol = collection(db, 'invites', code, 'responses');
-      onSnapshot(respCol, snap => {
-        area.innerHTML = '';
-        snap.forEach(d => {
-          const data = d.data();
-          const div = document.createElement('div');
-          div.className = 'responseItem';
-          const dStr = data.date ? new Date(data.date).toLocaleDateString() : '';
-          div.innerHTML = `<strong>${data.name || 'Convidado'}</strong> — ${dStr} ${data.time || ''}<div class='muted'>${data.message||''}</div>`;
-          area.appendChild(div);
-        });
-        if(snap.empty) area.innerHTML = '<div class="muted">Nenhuma resposta ainda.</div>';
+      const all = loadLocalInvites();
+      const inv = all[code];
+      area.innerHTML = '';
+      if(!inv || !inv.responses || inv.responses.length===0){ area.innerHTML = '<div class="muted">Nenhuma resposta ainda.</div>'; return; }
+      inv.responses.slice().reverse().forEach(r=>{
+        const dStr = r.date ? new Date(r.date).toLocaleDateString() : '';
+        const div = document.createElement('div');
+        div.className = 'responseItem';
+        div.innerHTML = `<strong>${r.name||'Convidado'}</strong> — ${dStr} ${r.time || ''}<div class='muted'>${r.message||''}</div>`;
+        area.appendChild(div);
       });
-    }
+    };
 
-    onAuthStateChanged(auth, async user => {
-      if(user){
-        authUser.textContent = user.displayName || user.email;
-        loginBtn.classList.add('hidden');
-        logoutBtn.classList.remove('hidden');
-        panelSection.classList.remove('hidden');
+    window.exportInvite = function(code){
+      const all = loadLocalInvites();
+      const inv = all[code];
+      if(!inv) return alert('Convite não encontrado.');
+      const blob = new Blob([JSON.stringify(inv, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `meudate-invite-${code}.json`; document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    };
 
-        // Listen to invites created by this user (creatorUid)
-        const q = query(collection(db, 'invites'), where('creatorUid','==', user.uid));
-        onSnapshot(q, snap => {
-          const invites = [];
-          snap.forEach(docSnap => {
-            const d = docSnap.data();
-            invites.push({...d, code: docSnap.id});
-          });
-          renderInvites(invites);
-        });
-      } else {
-        authUser.textContent = '';
-        loginBtn.classList.remove('hidden');
-        logoutBtn.classList.add('hidden');
-        panelSection.classList.remove('hidden');
+    window.deleteInvite = function(code){
+      if(!confirm('Apagar este convite localmente?')) return;
+      const all = loadLocalInvites(); delete all[code]; saveLocalInvites(all); render();
+    };
 
-        // For unauthenticated users we don't show invites by uid. They can use the creatorKey in the main page.
-        invitesList.innerHTML = '<div class="muted">Faça login para ver seus convites protegidos, ou use a chave do painel que aparece ao criar um convite.</div>';
-      }
+    importBtn.addEventListener('click', ()=> importFile.click());
+    importFile.addEventListener('change', async (ev)=>{
+      const f = ev.target.files && ev.target.files[0];
+      if(!f) return;
+      try{
+        const text = await f.text(); const obj = JSON.parse(text);
+        if(!obj.code) obj.code = Math.random().toString(36).slice(2,8).toUpperCase();
+        const all = loadLocalInvites(); all[obj.code] = obj; saveLocalInvites(all); render(); alert('Importado com sucesso.');
+      }catch(e){ alert('Erro ao importar: ' + e.message); }
     });
 
-    // expose openResponses so inline onclick can call it
-    window.openResponses = openResponses;
+    clearAllBtn.addEventListener('click', ()=> {
+      if(!confirm('Apagar todos os convites locais?')) return;
+      saveLocalInvites({}); render();
+    });
+
+    render();
+  })();
   </script>
 </body>
 </html>
