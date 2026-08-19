@@ -4,14 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MeuDate — Convites</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
   <main class="container">
     <h1>MeuDate</h1>
 
-    <!-- Criar convite -->
+    <div class="note">
+      <label><input id="localMode" type="checkbox" checked> Usar modo offline (salvar convites no seu navegador)</label>
+    </div>
+
     <section id="create-section">
       <h2>Criar um convite</h2>
       <label>Seu nome
@@ -19,6 +22,9 @@
       </label>
       <label>Título (opcional)
         <input id="eventTitle" placeholder="Ex: Date sábado?">
+      </label>
+      <label>Imagem (opcional)
+        <input id="inviteImage" type="file" accept="image/*">
       </label>
       <button id="createBtn">Criar convite</button>
 
@@ -33,12 +39,17 @@
         <input id="dashboardKey" readonly>
         <div class="note">Guarde a chave do painel — ela permite ver/gerenciar este convite no protótipo.</div>
 
+        <div class="row" style="margin-top:8px">
+          <button id="exportInvite">Exportar convite (.json)</button>
+          <button id="importInvite">Importar convite</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none">
+        </div>
+
         <h3>Respostas</h3>
         <ul id="responsesList"></ul>
       </div>
     </section>
 
-    <!-- Receber convite / aceitar -->
     <section id="accept-section" class="hidden">
       <h2>Convite</h2>
       <div id="inviteHeader"></div>
@@ -59,13 +70,14 @@
 
       <div id="acceptedPanel" class="hidden">
         <h3>Date aceito! ❤️</h3>
-        <p>Obrigado — sua resposta foi enviada.</p>
+        <p>Obrigado — sua resposta foi salva no seu navegador.</p>
       </div>
     </section>
 
+    <p style="margin-top:18px"><a href="painel.html">Ir para o painel</a></p>
   </main>
 
-  <script type="module" src="script.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="script.js"></script>
 </body>
 </html>
