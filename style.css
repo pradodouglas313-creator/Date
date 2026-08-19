@@ -1,0 +1,36 @@
+/* Basic styles for MeuDate */
+:root{
+  --bg:#ffffff;
+  --muted:#6b7280;
+  --accent:#ef4444;
+  --card:#f8fafc;
+  --max-width:760px;
+}
+*{box-sizing:border-box}
+body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; background:var(--bg); color:#111827; -webkit-font-smoothing:antialiased}
+.container{max-width:var(--max-width); margin:28px auto; padding:18px}
+h1{margin:0 0 12px 0}
+.note{color:var(--muted); font-size:0.95rem; margin:8px 0}
+label{display:block;margin:10px 0}
+input,button,select{font:inherit}
+input{padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;min-width:0}
+button{background:#111827;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+button.button{background:transparent;border:1px solid #e5e7eb;color:#111827;padding:6px 10px;border-radius:6px}
+.hidden{display:none}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.muted{color:var(--muted);font-size:0.95rem}
+.container h2{margin-top:18px}
+#createdPanel input[readonly]{width:100%;padding:8px 10px}
+#responsesList{list-style:none;padding-left:0}
+#responsesList li{padding:8px;border-bottom:1px solid #f1f5f9}
+.timeBtn{border:1px solid #e5e7eb;background:#fff;padding:6px 10px;border-radius:6px;cursor:pointer}
+.timeBtn.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+.invite-card{width:100%;height:220px;border-radius:10px;overflow:hidden;background:#f3f4f6;position:relative;background-position:center;background-size:cover}
+.invite-card::before{content:'';position:absolute;inset:0;background-size:cover;filter:blur(8px) brightness(.6);transform:scale(1.06);z-index:0}
+.invite-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;color:#fff;z-index:1}
+.invite-cover-thumb{max-width:80px;border-radius:6px;margin-right:10px}
+.code{font-family:monospace;background:#f1f5f9;padding:4px 8px;border-radius:6px}
+.authRow{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.pannel-note{font-size:0.9rem;color:var(--muted)}
+footer{margin-top:28px;color:var(--muted);font-size:0.9rem}
+@media(min-width:800px){.row{justify-content:flex-start}}
