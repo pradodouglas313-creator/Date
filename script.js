@@ -9,10 +9,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "SEU_API_KEY",
-  authDomain: "SEU_AUTH_DOMAIN",
-  projectId: "SEU_PROJECT_ID",
-  // ... demais campos
+  apiKey: "AIzaSyBiL_Ev5z6lN66x577tHkIHrAs7sjToL38",
+  authDomain: "meudate-1d36d.firebaseapp.com",
+  projectId: "meudate-1d36d",
+  storageBucket: "meudate-1d36d.firebasestorage.app",
+  messagingSenderId: "1001389537404",
+  appId: "1:1001389537404:web:c073e379324992772cb1f9",
+  measurementId: "G-SBVY740DT6"
 };
 
 const app = initializeApp(firebaseConfig);
